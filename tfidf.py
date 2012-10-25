@@ -21,7 +21,7 @@ Usage:
     - For now, the documents are only collections of text, no HTML, XML, RDF, or any other format
     - Simply run this script file with your input file as a single parameter, for example:
             python tfidf.py input_files.txt
-    - This script will generate new files, one for each of the input files, with the prefix "tfidf_"
+    - This script will generate new files, one for each of the input files, with the suffix "_tfidf"
             which contains terms with corresponding tfidf score, each on a separate line
 
 """
@@ -29,8 +29,9 @@ Usage:
 import sys, re, math
 from nltk.stem.wordnet import WordNetLemmatizer
 
-# we maintain an array of (words-freq) pairs for each document
+# a list of (words-freq) pairs for each document
 global_terms_in_doc = {}
+# list to hold occurrences of terms across documents
 global_term_freq    = {}
 num_docs            = 0
 
