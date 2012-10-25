@@ -82,11 +82,10 @@ for f in all_files:
 
 for f in all_files:
 
-    writer = open('tfidf_' + f, 'w')
+    writer = open(f + '_tfidf', 'w')
     # iterate over terms in f, calculate their tf-idf
     for (term,freq) in global_terms_in_doc[f].items():
         idf = math.log(float(1 + num_docs) / float(1 + global_term_freq[term]))
-        print('term: ' + term + ' - tf = ' + str(freq) + ', idf = ' + str(global_term_freq[term]))
         tfidf = freq * idf
         writer.write(term + '\t' + str(tfidf) + '\n')
 
