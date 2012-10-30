@@ -126,10 +126,16 @@ for f in all_files:
 for f in all_files:
 
     writer = open(f + '_tfidf', 'w')
-    # iterate over terms in f, calculate their tf-idf
+    result = []
+    # iterate over terms in f, calculate their tf-idf, put in new list
     for (term,freq) in global_terms_in_doc[f].items():
         idf = math.log(float(1 + num_docs) / float(1 + global_term_freq[term]))
         tfidf = freq * idf
+        result.append([tfidf, term])
+
+    # sort result on tfidf and write them in descending order
+    result = sorted(result, reverse=True)
+    for (tfidf, term) in result:
         writer.write(term + '\t' + str(tfidf) + '\n')
 
 print('success, with ' + str(num_docs) + ' documents.')
