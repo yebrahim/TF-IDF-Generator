@@ -18,3 +18,8 @@ Usage:
             python tfidf.py input_files.txt
     - This script will generate new files, one for each of the input files, with the prefix "tfidf_"
             which contains terms with corresponding tfidf score, each on a separate line
+
+This code now supports French (and similar accented European languages), but a lexicon file is needed, which maps a word to its lemmata. An example file for French is given under the name oldlexique.txt
+If needed to run using the lexicon file, use the -l directive to specify the file, from which the script will load two columns corresponding to the word and its lemmata.
+Example usage:
+        python tfidf.py -l oldlexique.txt input_files.txt

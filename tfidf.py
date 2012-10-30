@@ -28,30 +28,73 @@ Usage:
 
 import sys, re, math
 from nltk.stem.wordnet import WordNetLemmatizer
+from optparse import OptionParser
 
 # a list of (words-freq) pairs for each document
 global_terms_in_doc = {}
 # list to hold occurrences of terms across documents
 global_term_freq    = {}
 num_docs            = 0
+foreign_lang        = False
+lang_dictionary     = {}
+print('initializing..')
+
+# support for custom language if needed
+def loadLanguageLemmas(filePath):
+    print('loading language from file: ' + filePath)
+    f = open(filePath)
+    for line in f:
+        words = line.split()
+        if words[1] == '=' or words[0] == words[1]:
+            continue
+        lang_dictionary[words[0]] = words[1]
+    global foreign_lang
+    foreign_lang = True
 
 # function to tokenize text, and put words back to their roots
-def tokenize(str):
+def tokenize(text):
 
     # remove punctuation
-    tokens = re.findall(r"<a.*?/a>|<[^\>]*>|[\w'@#]+", str.lower())
+    if foreign_lang:
+        from nltk.tokenize.punkt import PunktWordTokenizer
+        tokens = PunktWordTokenizer().tokenize(text)
+    else:
+        tokens = re.findall(r"<a.*?/a>|<[^\>]*>|[\w'@#]+", text.lower())
 
     # lemmatize words. try both noun and verb lemmatizations
     lmtzr = WordNetLemmatizer()
     for i in range(0,len(tokens)):
-        res = lmtzr.lemmatize(tokens[i])
-        if res == tokens[i]:
-            tokens[i] = lmtzr.lemmatize(tokens[i], 'v')
+        tokens[i] = tokens[i].strip("'")
+        if foreign_lang:
+            if tokens[i] in lang_dictionary:
+                tokens[i] = lang_dictionary[tokens[i]]
         else:
-            tokens[i] = res
+            res = lmtzr.lemmatize(tokens[i])
+            if res == tokens[i]:
+                tokens[i] = lmtzr.lemmatize(tokens[i], 'v')
+            else:
+                tokens[i] = res
+    
+    # don't return any single letters
+    tokens = [i for i in tokens if len(i) > 1]
     return tokens
 
-reader = open(sys.argv[1])
+# __main__ execution
+
+parser = OptionParser(usage='usage: %prog [options] input_file')
+parser.add_option('-l', '--language_file', dest='language',
+        help='Foreign language lexical file. This file should map\
+                words to their lemmas', metavar='LANGUAGE_FILE')
+(options, args) = parser.parse_args()
+
+if options.language:
+    loadLanguageLemmas(options.language)
+
+if not args:
+    parser.print_help()
+    quit()
+
+reader = open(args[0])
 all_files = reader.read().splitlines()
 
 num_docs  = len(all_files)
