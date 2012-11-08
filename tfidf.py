@@ -37,6 +37,8 @@ global_term_freq    = {}
 num_docs            = 0
 foreign_lang        = False
 lang_dictionary     = {}
+top_k               = -1
+
 print('initializing..')
 
 # support for custom language if needed
@@ -51,15 +53,15 @@ def loadLanguageLemmas(filePath):
     global foreign_lang
     foreign_lang = True
 
+from nltk.tokenize.punkt import PunktWordTokenizer
 # function to tokenize text, and put words back to their roots
 def tokenize(text):
 
     # remove punctuation
-    if foreign_lang:
-        from nltk.tokenize.punkt import PunktWordTokenizer
-        tokens = PunktWordTokenizer().tokenize(text)
-    else:
-        tokens = re.findall(r"<a.*?/a>|<[^\>]*>|[\w'@#]+", text.lower())
+    #if foreign_lang:
+    tokens = PunktWordTokenizer().tokenize(text.replace('.',' '))
+    #else:
+    #    tokens = re.findall(r"<a.*?/a>|<[^\>]*>|[\w'@#]+", text.lower())
 
     # lemmatize words. try both noun and verb lemmatizations
     lmtzr = WordNetLemmatizer()
@@ -79,16 +81,34 @@ def tokenize(text):
     tokens = [i for i in tokens if len(i) > 1]
     return tokens
 
+def remove_stopwords(text):
+    import nltk
+    stopwords = nltk.corpus.stopwords.words('english')
+    content = [w for w in text if w.lower() not in stopwords]
+    return content
+
 # __main__ execution
 
 parser = OptionParser(usage='usage: %prog [options] input_file')
 parser.add_option('-l', '--language_file', dest='language',
         help='Foreign language lexical file. This file should map\
                 words to their lemmas', metavar='LANGUAGE_FILE')
+parser.add_option('-k', '--top-k', dest='top_k',
+        help='output only terms with score no less k')
+parser.add_option('-m', '--mode', dest='mode',
+        help='display mode. can be either "both" or "term"')
 (options, args) = parser.parse_args()
 
 if options.language:
     loadLanguageLemmas(options.language)
+if options.top_k:
+    top_k = int(options.top_k)
+display_mode = 'both'
+if options.mode:
+    if options.mode == 'both' or options.mode == 'term':
+        display_mode = options.mode
+    else:
+        parser.print_help()
 
 if not args:
     parser.print_help()
@@ -106,6 +126,7 @@ for f in all_files:
     
     file_reader  = open(f)
     doc_words    = tokenize(file_reader.read())
+    doc_words    = remove_stopwords(doc_words)
     
     # increment local count
     for word in doc_words:
@@ -123,19 +144,27 @@ for f in all_files:
 
     global_terms_in_doc[f] = terms_in_doc
 
+print('working through documents.. ')
 for f in all_files:
 
     writer = open(f + '_tfidf', 'w')
     result = []
     # iterate over terms in f, calculate their tf-idf, put in new list
+    max_freq = 0;
+    for (term,freq) in global_terms_in_doc[f].items():
+        if freq > max_freq:
+            max_freq = freq
     for (term,freq) in global_terms_in_doc[f].items():
         idf = math.log(float(1 + num_docs) / float(1 + global_term_freq[term]))
-        tfidf = freq * idf
+        tfidf = float(freq) / float(max_freq) * float(idf)
         result.append([tfidf, term])
 
     # sort result on tfidf and write them in descending order
     result = sorted(result, reverse=True)
-    for (tfidf, term) in result:
-        writer.write(term + '\t' + str(tfidf) + '\n')
+    for (tfidf, term) in result[:top_k]:
+        if display_mode == 'both':
+            writer.write(term + '\t' + str(tfidf) + '\n')
+        else:
+            writer.write(term + '\n')
 
 print('success, with ' + str(num_docs) + ' documents.')
