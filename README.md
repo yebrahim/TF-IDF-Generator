@@ -1,6 +1,6 @@
 # TF-IDF Generator
 
-This script implements the TF-IDF term relevance scoring as described on wikipedia's article: <en.wikipedia.org/wiki/Tf–idf> to generate the TF-IDF ratings for a collection of documents. This script will also tokenize the input files to extract words (removes punctuation and puts all in lower case), and it will use the NLTK library to lemmatize words (get rid of stemmings)
+This script implements the TF-IDF term relevance scoring as described on this wikipedia's article: en.wikipedia.org/wiki/Tf–idf to generate the TF-IDF ratings for a collection of documents. This script will also tokenize the input files to extract words (removes punctuation and puts all in lower case), and it will use the NLTK library to lemmatize words (get rid of stemmings)
 
 ## Prerequisites:
 
